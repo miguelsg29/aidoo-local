@@ -1,0 +1,18 @@
+# Certificados (autofirmados; nunca subir claves)
+certs/
+*.pem
+*.key
+
+# Configuración con datos privados (IPs, credenciales MQTT) y estado en runtime
+.env
+config.local.*
+data/
+*.log
+*_log.txt
+send.hex
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
