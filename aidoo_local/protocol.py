@@ -29,8 +29,8 @@ REG_CURRENT_TEMP = 0x0C
 MODE_TO_HA = {0x01: "auto", 0x02: "cool", 0x04: "heat", 0x08: "fan_only", 0x10: "dry"}
 HA_TO_MODE = {v: k for k, v in MODE_TO_HA.items()}
 
-# --- velocidad de ventilador ---
-FAN_TO_HA = {0x04: "low", 0x10: "medium", 0x40: "high"}
+# --- velocidad de ventilador (verificado vs Modbus; auto=0x00 hallado por fuerza bruta) ---
+FAN_TO_HA = {0x00: "auto", 0x04: "low", 0x10: "medium", 0x40: "high"}
 HA_TO_FAN = {v: k for k, v in FAN_TO_HA.items()}
 
 

@@ -56,7 +56,7 @@ class MqttBridge:
             "temperature_command_topic": self.t["temp_set"],
             "temperature_state_topic": self.t["temp"],
             "current_temperature_topic": self.t["current"],
-            "fan_modes": ["low", "medium", "high"],
+            "fan_modes": ["auto", "low", "medium", "high"],
             "fan_mode_command_topic": self.t["fan_set"], "fan_mode_state_topic": self.t["fan"],
             "min_temp": self.min_temp, "max_temp": self.max_temp, "temp_step": self.temp_step,
             "temperature_unit": "C",
