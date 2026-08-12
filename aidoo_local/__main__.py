@@ -8,6 +8,7 @@ import time
 from .config import Config
 from .server import AidooServer
 from .mqtt_bridge import MqttBridge
+from .webui import start_webui
 
 
 def main():
@@ -16,6 +17,7 @@ def main():
     print(f"[aidoo-local] v{__import__('aidoo_local').__version__}")
     srv = AidooServer(cfg.cert_path, cfg.key_path, port=cfg.listen_port)
     srv.start()
+    start_webui(srv, port=cfg.web_port)
     if cfg.mqtt_host:
         MqttBridge(srv, cfg.mqtt_host, cfg.mqtt_port, cfg.mqtt_user, cfg.mqtt_pass,
                    node_id=cfg.node_id, name=cfg.name, min_temp=cfg.min_temp,

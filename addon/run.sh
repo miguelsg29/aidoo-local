@@ -31,6 +31,7 @@ fi
 export AIDOO_CERT=/data/cert.pem
 export AIDOO_KEY=/data/key.pem
 export AIDOO_PORT=443
+export AIDOO_WEB_PORT=8098
 export PYTHONPATH=/app
 
 echo "[INFO] Aidoo Local: escuchando en :443. Redirige por DNS skaidoo1.airzonecloud.com a esta IP"

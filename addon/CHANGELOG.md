@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+- Panel web de control y pruebas: estado en vivo (encendido, modo, consigna, temperatura,
+  ventilador), controles, y una sección de depuración (registros del Aidoo + envío de
+  comandos en crudo). En la app se abre desde la barra lateral de Home Assistant (ingress);
+  en modo suelto, en `http://<equipo>:8098`. Sin dependencias nuevas (servidor HTTP integrado).
+
 ## 0.1.1
 - Terminología «app» (Home Assistant 2026.2 renombró «Add-ons» a «Apps»).
 - Documentado que el Aidoo exige el **puerto 443** libre en el equipo (si HA ya lo usa,

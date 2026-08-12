@@ -8,6 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY aidoo_local ./aidoo_local
 
-ENV AIDOO_CERT=/data/cert.pem AIDOO_KEY=/data/key.pem AIDOO_PORT=443 PYTHONUNBUFFERED=1
+ENV AIDOO_CERT=/data/cert.pem AIDOO_KEY=/data/key.pem AIDOO_PORT=443 AIDOO_WEB_PORT=8098 PYTHONUNBUFFERED=1
+EXPOSE 443 8098
 VOLUME ["/data"]
 CMD ["python", "-m", "aidoo_local"]

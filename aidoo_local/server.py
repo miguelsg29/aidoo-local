@@ -62,6 +62,12 @@ class AidooServer:
             self._enqueue(P.cmd_fan(val))
             self._optimistic(fan=ha_fan)
 
+    def send_raw(self, hexstr: str):
+        """Encola un comando en crudo (hex) — útil para depurar/reversear registros nuevos."""
+        data = bytes.fromhex(hexstr.strip().replace(" ", "").replace(":", ""))
+        if data:
+            self._enqueue(data)
+
     def _optimistic(self, **kw):
         for k, v in kw.items():
             setattr(self.state, k, v)

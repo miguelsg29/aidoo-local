@@ -13,6 +13,7 @@ services:
     restart: unless-stopped
     ports:
       - "443:443"       # el Aidoo conecta aquí (puerto fijo en su firmware)
+      - "8098:8098"     # panel web de control/pruebas -> http://<este-equipo>:8098
     env_file: .env      # MQTT_HOST/PORT/USER/PASS y AIDOO_* (no se sube al repo)
     volumes:
       - ./data:/data    # certificado autofirmado persistente

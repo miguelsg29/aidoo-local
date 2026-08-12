@@ -1,5 +1,5 @@
 name: "Aidoo Local"
-version: "0.1.1"
+version: "0.1.2"
 slug: "aidoo_local"
 description: "Control local (sin nube) de un Airzone Aidoo y su aire, integrado en Home Assistant por MQTT."
 url: "https://github.com/miguelsg29/aidoo-local"
@@ -8,6 +8,10 @@ arch:
   - amd64
   - armv7
 init: false
+# Panel de control accesible desde la barra lateral de Home Assistant (ingress).
+ingress: true
+ingress_port: 8098
+panel_icon: "mdi:air-conditioner"
 # El Aidoo se conecta a este puerto (redirige por DNS skaidoo1.airzonecloud.com a Home Assistant).
 ports:
   443/tcp: 443

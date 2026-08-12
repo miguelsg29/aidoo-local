@@ -25,6 +25,7 @@ class Config:
     def __init__(self):
         load_env()
         self.listen_port = int(_e("AIDOO_PORT", "443"))
+        self.web_port = int(_e("AIDOO_WEB_PORT", "8098"))
         self.cert_path = _e("AIDOO_CERT", "certs/cert.pem")
         self.key_path = _e("AIDOO_KEY", "certs/key.pem")
         self.mqtt_host = _e("MQTT_HOST", "")

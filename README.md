@@ -63,7 +63,8 @@ siempre encendido dentro de HA.
    Assistant** (AdGuard Home / Pi-hole / router). La app abre el **puerto 443** (que debe
    estar libre en HA — ver «Nota sobre el puerto 443»).
 4. **Reinicia el Aidoo** (corta la corriente y vuelve a darle) para que reconecte a HA.
-5. Aparecerá la entidad **climate** en Home Assistant (autodescubrimiento MQTT).
+5. Aparecerá la entidad **climate** en Home Assistant (autodescubrimiento MQTT), y un
+   **panel web** de control/pruebas en la **barra lateral** de HA (ingress).
 
 > ### Nota sobre el puerto 443
 > El Aidoo se conecta **obligatoriamente al puerto 443** (fijo en su firmware), así que la app
@@ -106,7 +107,8 @@ propio aparato** como referencia:
   con Modbus). El **modo y la velocidad** del ventilador NO los reporta el Aidoo, así que se
   llevan por **seguimiento optimista** (lo último ordenado; el aire obedece igual).
 - ✅ El Aidoo funciona de forma estable con la nube suplantada, sin errores.
-- ✅ Empaquetado como **app de Home Assistant** (add-on, en `addon/`).
+- ✅ Empaquetado como **app de Home Assistant** (add-on, en `addon/`) con **panel web**
+  (ingress / `http://<equipo>:8098`) para control y pruebas.
 - ⬜ Pendiente/afinar: velocidad de ventilador «auto», más sensores (consumo, errores).
 
 ## Privacidad

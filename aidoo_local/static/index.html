@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Aidoo Local</title>
+<style>
+  :root{
+    --bg:#f2f4f7; --card:#fff; --ink:#1a2230; --muted:#6b7688; --line:#e4e8ee;
+    --accent:#0aa1a1; --accent-ink:#087; --soft:#e6f6f6; --on:#12b886; --off:#adb5bd;
+    --heat:#f76707; --cool:#1c7ed6; --dry:#7048e8; --fan:#495057; --auto:#0aa1a1;
+  }
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --bg:#12151b; --card:#1b2029; --ink:#e7ecf3; --muted:#8b96a6; --line:#2a313d;
+    --soft:#0f3536;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .app{max-width:520px;margin:0 auto;padding:16px}
+  h1{font-size:19px;margin:6px 2px 14px;display:flex;align-items:center;gap:9px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--off)}
+  .dot.ok{background:var(--on)}
+  .sub{font-size:12px;color:var(--muted);font-weight:400}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-bottom:14px}
+  .temp{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+  .current{font-size:15px;color:var(--muted)}
+  .current b{display:block;font-size:40px;color:var(--ink);line-height:1.1}
+  .target{display:flex;align-items:center;gap:14px}
+  .target .val{font-size:30px;font-weight:600;min-width:78px;text-align:center;
+    font-variant-numeric:tabular-nums}
+  .rnd{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:24px;cursor:pointer}
+  .rnd:active{background:var(--soft)}
+  .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
+    margin:14px 2px 8px}
+  .seg{display:flex;flex-wrap:wrap;gap:8px}
+  .seg button{flex:1;min-width:74px;padding:11px 8px;border-radius:11px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:13.5px;cursor:pointer;font-weight:600}
+  .seg button.sel{color:#fff;border-color:transparent}
+  .seg button.sel[data-v=off]{background:var(--off)}
+  .seg button.sel[data-v=auto],.seg button.sel[data-v=fan_auto]{background:var(--auto)}
+  .seg button.sel[data-v=cool]{background:var(--cool)}
+  .seg button.sel[data-v=heat]{background:var(--heat)}
+  .seg button.sel[data-v=dry]{background:var(--dry)}
+  .seg button.sel[data-v=fan_only]{background:var(--fan)}
+  .seg button.sel[data-v=low],.seg button.sel[data-v=medium],.seg button.sel[data-v=high]{background:var(--accent)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
+  summary{cursor:pointer;font-weight:600;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;
+    font-variant-numeric:tabular-nums}
+  td{padding:3px 6px;border-bottom:1px solid var(--line)}
+  td:first-child{color:var(--muted);width:64px}
+  .hexrow{display:flex;gap:8px;margin-top:12px}
+  .hexrow input{flex:1;padding:9px;border:1px solid var(--line);border-radius:9px;
+    background:var(--bg);color:var(--ink);font-family:ui-monospace,monospace;font-size:13px}
+  .hexrow button{padding:9px 14px;border-radius:9px;border:0;background:var(--accent);
+    color:#fff;font-weight:600;cursor:pointer}
+  .off{opacity:.5;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1><span class="dot" id="dot"></span> Aidoo Local <span class="sub" id="conntxt">conectando…</span></h1>
+
+  <div class="card" id="panel">
+    <div class="temp">
+      <div class="current">ambiente<b id="current">--°</b></div>
+      <div class="target">
+        <button class="rnd" id="down">−</button>
+        <div class="val"><span id="setpoint">--</span>°</div>
+        <button class="rnd" id="up">+</button>
+      </div>
+    </div>
+    <div class="lbl">Modo</div>
+    <div class="seg" id="modes"></div>
+    <div class="lbl">Ventilador</div>
+    <div class="seg" id="fans"></div>
+  </div>
+
+  <details>
+    <summary>Depuración (registros del Aidoo)</summary>
+    <table id="raw"><tbody></tbody></table>
+    <div class="hexrow">
+      <input id="hex" placeholder="comando hex, p.ej. 0208040000fa0008"/>
+      <button id="sendhex">Enviar</button>
+    </div>
+    <p class="sub" style="margin:8px 2px 0">Envía tramas en crudo para reversear registros nuevos.</p>
+  </details>
+</div>
+
+<script>
+var BASE = location.pathname.replace(/[^/]*$/, "");   // soporta el ingress de Home Assistant
+var MODES = [["off","Apagar"],["auto","Auto"],["cool","Frío"],["heat","Calor"],["dry","Deshu"],["fan_only","Ventilador"]];
+var FANS = [["auto","Auto"],["low","Baja"],["medium","Media"],["high","Alta"]];
+var state = {};
+
+function build(container, items, action){
+  container.innerHTML = "";
+  items.forEach(function(it){
+    var b = document.createElement("button");
+    b.textContent = it[1]; b.dataset.v = it[0];
+    b.onclick = function(){ cmd(action, it[0]); };
+    container.appendChild(b);
+  });
+}
+function cmd(action, value){
+  fetch(BASE+"api/command", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({action:action, value:value})}).then(poll);
+}
+function render(){
+  var conn = !!state.connected;
+  document.getElementById("dot").className = "dot" + (conn?" ok":"");
+  document.getElementById("conntxt").textContent = conn ? "conectado" : "sin conexión con el Aidoo";
+  document.getElementById("panel").className = "card" + (conn?"":" off");
+  document.getElementById("current").textContent = (state.current_temp!=null?state.current_temp:"--")+"°";
+  document.getElementById("setpoint").textContent = (state.setpoint!=null?state.setpoint:"--");
+  var hvac = state.hvac_mode || "off";
+  document.querySelectorAll("#modes button").forEach(function(b){ b.classList.toggle("sel", b.dataset.v===hvac); });
+  document.querySelectorAll("#fans button").forEach(function(b){ b.classList.toggle("sel", b.dataset.v===state.fan); });
+  var tb = document.querySelector("#raw tbody"); tb.innerHTML = "";
+  var raw = state.raw || {};
+  Object.keys(raw).map(Number).sort(function(a,b){return a-b;}).forEach(function(r){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>0x"+r.toString(16).padStart(2,"0")+"</td><td>"+raw[r]+"</td>";
+    tb.appendChild(tr);
+  });
+}
+function poll(){
+  fetch(BASE+"api/state").then(function(r){return r.json();}).then(function(s){ state=s; render(); }).catch(function(){});
+}
+document.getElementById("up").onclick = function(){ if(state.setpoint!=null) cmd("setpoint", Math.min(30, state.setpoint+0.5)); };
+document.getElementById("down").onclick = function(){ if(state.setpoint!=null) cmd("setpoint", Math.max(16, state.setpoint-0.5)); };
+document.getElementById("sendhex").onclick = function(){
+  var h = document.getElementById("hex").value.trim();
+  if(!h) return;
+  fetch(BASE+"api/raw", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({hex:h})}).then(function(){ document.getElementById("hex").value=""; setTimeout(poll,600); });
+};
+build(document.getElementById("modes"), MODES, "mode");
+build(document.getElementById("fans"), FANS, "fan");
+poll(); setInterval(poll, 3000);
+</script>
+</body>
+</html>
