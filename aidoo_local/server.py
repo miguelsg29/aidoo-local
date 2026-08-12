@@ -33,8 +33,12 @@ class AidooServer:
         self.last_seen = 0.0
 
     # ---- API de control (alto nivel) ----
+    # Se actualiza el estado de forma OPTIMISTA al mandar el comando: el modo y la velocidad
+    # no se leen de la telemetría (el Aidoo no los reporta), así que la fuente de verdad para
+    # esos campos es lo último que hemos ordenado (el aire obedece, verificado vs Modbus).
     def set_power(self, on: bool):
         self._enqueue(P.cmd_power(on))
+        self._optimistic(power=on)
 
     def set_mode(self, ha_mode: str):
         """ha_mode: off/auto/cool/heat/dry/fan_only. 'off' apaga; el resto enciende + fija modo."""
@@ -46,14 +50,26 @@ class AidooServer:
             return
         self.set_power(True)
         self._enqueue(P.cmd_mode(bit))
+        self._optimistic(power=True, mode=ha_mode)
 
     def set_setpoint(self, celsius: float):
         self._enqueue(P.cmd_setpoint(celsius))
+        self._optimistic(setpoint=round(float(celsius), 1))
 
     def set_fan(self, ha_fan: str):
         val = P.HA_TO_FAN.get(ha_fan)
         if val is not None:
             self._enqueue(P.cmd_fan(val))
+            self._optimistic(fan=ha_fan)
+
+    def _optimistic(self, **kw):
+        for k, v in kw.items():
+            setattr(self.state, k, v)
+        if self.on_change:
+            try:
+                self.on_change(self.state.to_dict())
+            except Exception:
+                pass
 
     def _enqueue(self, cmd: bytes):
         with self._qlock:

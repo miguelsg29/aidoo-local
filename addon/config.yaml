@@ -1,0 +1,37 @@
+name: "Aidoo Local"
+version: "0.1.0"
+slug: "aidoo_local"
+description: "Control local (sin nube) de un Airzone Aidoo y su aire, integrado en Home Assistant por MQTT."
+url: "https://github.com/miguelsg29/aidoo-local"
+arch:
+  - aarch64
+  - amd64
+  - armv7
+init: false
+# El Aidoo se conecta a este puerto (redirige por DNS skaidoo1.airzonecloud.com a Home Assistant).
+ports:
+  443/tcp: 443
+ports_description:
+  443/tcp: "Puerto TLS donde conecta el Aidoo (redirige aquí skaidoo1.airzonecloud.com)"
+# Descubrimiento del broker MQTT de Home Assistant (Mosquitto): si no rellenas MQTT_* a mano,
+# se autoconfigura. Necesario para publicar la entidad climate en HA.
+services:
+  - mqtt:want
+options:
+  AIDOO_NAME: "Aire (local)"
+  AIDOO_MIN_TEMP: 16
+  AIDOO_MAX_TEMP: 30
+  AIDOO_TEMP_STEP: 0.5
+  MQTT_HOST: ""
+  MQTT_PORT: 1883
+  MQTT_USER: ""
+  MQTT_PASS: ""
+schema:
+  AIDOO_NAME: str
+  AIDOO_MIN_TEMP: int
+  AIDOO_MAX_TEMP: int
+  AIDOO_TEMP_STEP: float
+  MQTT_HOST: str?
+  MQTT_PORT: int
+  MQTT_USER: str?
+  MQTT_PASS: password?

@@ -23,7 +23,10 @@ REG_FAN = 0x0B
 REG_CURRENT_TEMP = 0x0C
 
 # --- modos (byte alto de reg 0x07; bitmask) <-> nombres de Home Assistant ---
-MODE_TO_HA = {0x01: "auto", 0x02: "cool", 0x04: "heat", 0x08: "dry", 0x10: "fan_only"}
+# Valores verificados cruzando comando de la nube -> Modbus (verdad de referencia):
+# 0x08 = fan_only y 0x10 = dry (el mapeo manual inicial, con el poll con pérdidas, los tenía
+# intercambiados).
+MODE_TO_HA = {0x01: "auto", 0x02: "cool", 0x04: "heat", 0x08: "fan_only", 0x10: "dry"}
 HA_TO_MODE = {v: k for k, v in MODE_TO_HA.items()}
 
 # --- velocidad de ventilador ---
@@ -104,21 +107,21 @@ class AidooState:
         return self.mode or "off"
 
     def update_from_report(self, reg: int, data: bytes) -> bool:
-        """Aplica un informe (typ 0x01). Devuelve True si cambió algo relevante."""
+        """Aplica un informe (typ 0x01) del Aidoo. Devuelve True si cambió algo relevante.
+
+        Solo se leen de la telemetría los campos que el Aidoo SÍ reporta de forma fiable:
+        encendido (0x00), consigna (0x08) y temperatura ambiente (0x0c). El MODO y la
+        VELOCIDAD del ventilador NO se reportan (verificado: ningún registro cambia al
+        cambiarlos), así que se llevan por seguimiento optimista en el servidor (set_*)."""
         self.raw[reg] = data.hex()
-        before = (self.power, self.mode, self.setpoint, self.current_temp, self.fan)
+        before = (self.power, self.setpoint, self.current_temp)
         if reg == REG_POWER and len(data) >= 4:
-            # bit0 del último byte del bloque de estado = encendido
-            self.power = bool(data[-1] & 0x01)
-        elif reg == REG_MODE and len(data) >= 3:
-            self.mode = MODE_TO_HA.get(data[2], self.mode)
+            self.power = bool(data[-1] & 0x01)   # bit0 del bloque de estado = encendido
         elif reg == REG_SETPOINT and len(data) >= 4:
             self.setpoint = _le16(data) / 10.0
         elif reg == REG_CURRENT_TEMP and len(data) >= 4:
             self.current_temp = _le16(data) / 10.0
-        elif reg == REG_FAN and len(data) >= 3:
-            self.fan = FAN_TO_HA.get(data[2], self.fan)
-        after = (self.power, self.mode, self.setpoint, self.current_temp, self.fan)
+        after = (self.power, self.setpoint, self.current_temp)
         return before != after
 
     def to_dict(self) -> dict:
