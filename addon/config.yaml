@@ -1,5 +1,5 @@
 name: "Aidoo Local"
-version: "0.1.0"
+version: "0.1.1"
 slug: "aidoo_local"
 description: "Control local (sin nube) de un Airzone Aidoo y su aire, integrado en Home Assistant por MQTT."
 url: "https://github.com/miguelsg29/aidoo-local"

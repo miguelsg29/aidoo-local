@@ -1,5 +1,5 @@
 #!/bin/sh
-# Lee la configuración del add-on de Home Assistant y arranca Aidoo Local.
+# Lee la configuración de la app de Home Assistant y arranca Aidoo Local.
 CONFIG="/data/options.json"
 
 export AIDOO_NAME=$(jq -r '.AIDOO_NAME // "Aire (local)"' $CONFIG)
@@ -22,7 +22,7 @@ if [ -z "$MQTT_HOST" ] && [ -n "$SUPERVISOR_TOKEN" ]; then
         export MQTT_PASS=$(echo "$MQTT_SVC" | jq -r '.data.password // ""')
         echo "[INFO] MQTT autoconfigurado desde Home Assistant: ${MQTT_HOST}:${MQTT_PORT}"
     else
-        echo "[INFO] MQTT: Home Assistant no devolvió broker. ¿Tienes el add-on 'Mosquitto broker'?"
+        echo "[INFO] MQTT: Home Assistant no devolvió broker. ¿Tienes la app 'Mosquitto broker'?"
         echo "       (o rellena MQTT_HOST/USER/PASS a mano para un broker externo)."
     fi
 fi

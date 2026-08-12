@@ -47,21 +47,33 @@ El protocolo es un **binario propio sobre TLS** (reverseado). Trama:
 Detalle clave: el Aidoo **ignora los comandos durante su volcado de arranque**; hay que
 enviarlos unos segundos después de (re)conectar (lo gestiona el servidor).
 
-## Instalación como add-on de Home Assistant (recomendado)
+## Instalación como app de Home Assistant (recomendado)
 
-Este repositorio **es también un repositorio de add-ons de Home Assistant**, así corre
+Este repositorio **es también un repositorio de Apps de Home Assistant** (add-ons), así corre
 siempre encendido dentro de HA.
 
-1. **Añade el repositorio**: en Home Assistant, **Ajustes → Add-ons → Tienda de add-ons →
+> Desde **Home Assistant 2026.2**, los «Add-ons» se llaman ahora **«Apps»**. Si tu HA es
+> anterior, es exactamente lo mismo que «Add-ons».
+
+1. **Añade el repositorio**: en Home Assistant, **Ajustes → Apps → Tienda de Apps →
    menú ⋮ → Repositorios**, pega `https://github.com/miguelsg29/aidoo-local` y **Añadir**.
 2. **Instala «Aidoo Local»** y arráncalo. MQTT se **autoconfigura** desde el broker de HA
    (Mosquitto); solo rellena `MQTT_*` a mano si usas un broker externo.
 3. **Redirige el DNS**: haz que **`skaidoo1.airzonecloud.com`** apunte a la **IP de Home
-   Assistant** (AdGuard Home / Pi-hole / router). El add-on abre el **puerto 443**.
+   Assistant** (AdGuard Home / Pi-hole / router). La app abre el **puerto 443** (que debe
+   estar libre en HA — ver «Nota sobre el puerto 443»).
 4. **Reinicia el Aidoo** (corta la corriente y vuelve a darle) para que reconecte a HA.
 5. Aparecerá la entidad **climate** en Home Assistant (autodescubrimiento MQTT).
 
-## Puesta en marcha (manual, sin add-on)
+> ### Nota sobre el puerto 443
+> El Aidoo se conecta **obligatoriamente al puerto 443** (fijo en su firmware), así que la app
+> debe escuchar en el 443 del equipo al que rediriges `skaidoo1`. Si en Home Assistant ya hay
+> algo usando el 443 (p. ej. un proxy SSL, Nginx, Duck DNS o HA con SSL), la app no arrancará
+> («port 443 already in use»): libera ese puerto o **ejecuta la app en otro equipo** de la red
+> con el 443 libre (apunta `skaidoo1` a esa IP y `MQTT_HOST` a tu broker de HA — la entidad
+> aparece en HA igualmente).
+
+## Puesta en marcha (manual, sin la app / en otro equipo)
 
 1. **Instala dependencias**: `pip install -r requirements.txt`.
 2. **Configura**: copia `.env.example` a `.env` y ajusta `MQTT_*` (broker de Home Assistant).
@@ -82,7 +94,7 @@ propio aparato** como referencia:
   con Modbus). El **modo y la velocidad** del ventilador NO los reporta el Aidoo, así que se
   llevan por **seguimiento optimista** (lo último ordenado; el aire obedece igual).
 - ✅ El Aidoo funciona de forma estable con la nube suplantada, sin errores.
-- ✅ Empaquetado como **add-on de Home Assistant** (`addon/`).
+- ✅ Empaquetado como **app de Home Assistant** (add-on, en `addon/`).
 - ⬜ Pendiente/afinar: velocidad de ventilador «auto», más sensores (consumo, errores).
 
 ## Privacidad
