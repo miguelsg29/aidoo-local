@@ -1,0 +1,18 @@
+# Ejecuta Aidoo Local en cualquier equipo con Docker que tenga el puerto 443 LIBRE
+# (útil si tu Home Assistant ya usa el 443 con Nginx Proxy Manager / SSL).
+#
+#   1) cp .env.example .env   y ajusta MQTT_* (broker de Home Assistant) + AIDOO_NAME
+#   2) docker compose up -d --build
+#   3) redirige por DNS  skaidoo1.airzonecloud.com -> IP de ESTE equipo, y reinicia el Aidoo
+#
+# La entidad climate aparece en Home Assistant por MQTT, aunque el contenedor no corra en HA.
+services:
+  aidoo-local:
+    build: .
+    container_name: aidoo-local
+    restart: unless-stopped
+    ports:
+      - "443:443"       # el Aidoo conecta aquí (puerto fijo en su firmware)
+    env_file: .env      # MQTT_HOST/PORT/USER/PASS y AIDOO_* (no se sube al repo)
+    volumes:
+      - ./data:/data    # certificado autofirmado persistente

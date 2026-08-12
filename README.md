@@ -73,14 +73,26 @@ siempre encendido dentro de HA.
 > con el 443 libre (apunta `skaidoo1` a esa IP y `MQTT_HOST` a tu broker de HA — la entidad
 > aparece en HA igualmente).
 
-## Puesta en marcha (manual, sin la app / en otro equipo)
+## Ejecutar en otro equipo con Docker (recomendado si HA ya usa el 443)
 
-1. **Instala dependencias**: `pip install -r requirements.txt`.
-2. **Configura**: copia `.env.example` a `.env` y ajusta `MQTT_*` (broker de Home Assistant).
-3. **Redirige el DNS**: haz que **`skaidoo1.airzonecloud.com`** apunte a la IP de este equipo.
-   Abre el **puerto 443**.
-4. **Arranca**: `python -m aidoo_local`. El certificado autofirmado se genera solo.
-5. **Reinicia el Aidoo** para que reconecte aquí.
+Si en Home Assistant el 443 está ocupado (p. ej. por **Nginx Proxy Manager**), ejecuta el app
+en **otro equipo** de la red con el 443 libre (una Raspberry, un NAS, un mini-PC…). La entidad
+sigue apareciendo en Home Assistant por MQTT.
+
+```bash
+cp .env.example .env          # ajusta MQTT_* (broker de HA) y AIDOO_NAME
+docker compose up -d --build
+```
+
+Luego redirige por DNS `skaidoo1.airzonecloud.com` a la **IP de ese equipo** y reinicia el Aidoo.
+
+### Sin Docker
+
+1. `pip install -r requirements.txt`
+2. `cp .env.example .env` y ajusta `MQTT_*`.
+3. Redirige `skaidoo1.airzonecloud.com` a la IP de este equipo (puerto 443 libre).
+4. `python -m aidoo_local` (el certificado autofirmado se genera solo).
+5. Reinicia el Aidoo.
 
 Para volver a la nube de Airzone (app oficial), quita la reescritura DNS de `skaidoo1`.
 
