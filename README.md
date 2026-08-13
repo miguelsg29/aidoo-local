@@ -106,10 +106,14 @@ propio aparato** como referencia:
 - ✅ **Lectura** de encendido, consigna y temperatura ambiente desde la telemetría (coincide
   con Modbus). El **modo y la velocidad** del ventilador NO los reporta el Aidoo, así que se
   llevan por **seguimiento optimista** (lo último ordenado; el aire obedece igual).
+- ✅ **Extras reverseados de la app** (por MITM, verificados byte a byte): **temporizador** de
+  apagado (`number`), **LED** (`switch`), sensores **Tª Trabajo** y **Tª Retorno**, y
+  **Tiempo a confort** (ETA calculado en local, como hace la nube).
 - ✅ El Aidoo funciona de forma estable con la nube suplantada, sin errores.
 - ✅ Empaquetado como **app de Home Assistant** (add-on, en `addon/`) con **panel web**
   (ingress / `http://<equipo>:8098`) para control y pruebas.
-- ⬜ Pendiente/afinar: velocidad de ventilador «auto», más sensores (consumo, errores).
+- ⬜ Nota: la unidad LG solo aporta datos básicos; consumo/temperaturas extendidas del Modbus
+  leen 0 en este equipo (son de bombas de calor agua/ACS).
 
 ## Privacidad
 

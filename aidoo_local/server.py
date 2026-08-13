@@ -11,6 +11,7 @@ import socket
 import ssl
 import threading
 import time
+from collections import deque
 
 from . import protocol as P
 
@@ -31,6 +32,7 @@ class AidooServer:
         self._ctx = None
         self.connected = False
         self.last_seen = 0.0
+        self._samples = deque(maxlen=240)  # (timestamp, current_temp) para estimar ETA a confort
 
     # ---- API de control (alto nivel) ----
     # Se actualiza el estado de forma OPTIMISTA al mandar el comando: el modo y la velocidad
@@ -62,6 +64,16 @@ class AidooServer:
             self._enqueue(P.cmd_fan(val))
             self._optimistic(fan=ha_fan)
 
+    def set_timer(self, minutes: int):
+        """Temporizador de apagado en minutos (0 = cancelar)."""
+        m = max(0, int(minutes))
+        self._enqueue(P.cmd_timer(m))
+        self._optimistic(timer_min=m)
+
+    def set_led(self, on: bool):
+        self._enqueue(P.cmd_led(bool(on)))
+        self._optimistic(led=bool(on))
+
     def send_raw(self, hexstr: str):
         """Encola un comando en crudo (hex) — útil para depurar/reversear registros nuevos."""
         data = bytes.fromhex(hexstr.strip().replace(" ", "").replace(":", ""))
@@ -71,11 +83,48 @@ class AidooServer:
     def _optimistic(self, **kw):
         for k, v in kw.items():
             setattr(self.state, k, v)
+        self._notify()
+
+    def _notify(self):
         if self.on_change:
             try:
-                self.on_change(self.state.to_dict())
+                self.on_change(self.snapshot())
             except Exception:
                 pass
+
+    def snapshot(self) -> dict:
+        """Estado + ETA a confort calculado en local."""
+        d = self.state.to_dict()
+        d["eta_min"] = self.eta_minutes()
+        return d
+
+    def eta_minutes(self):
+        """Estima los minutos hasta alcanzar la consigna, por regresión lineal de la Tª ambiente
+        (como hace la nube de Airzone, que no manda este dato: lo calculamos nosotros)."""
+        st = self.state
+        if not st.power or st.setpoint is None or st.current_temp is None:
+            return None
+        pts = [(t, v) for (t, v) in self._samples if self._samples and self._samples[-1][0] - t <= 1500]
+        if len(pts) < 3:
+            return None
+        t0 = pts[0][0]
+        xs = [t - t0 for t, _ in pts]
+        ys = [v for _, v in pts]
+        n = len(xs)
+        sx, sy = sum(xs), sum(ys)
+        sxx = sum(x * x for x in xs)
+        sxy = sum(x * y for x, y in zip(xs, ys))
+        denom = n * sxx - sx * sx
+        if denom == 0:
+            return None
+        slope = (n * sxy - sx * sy) / denom          # °C por segundo
+        gap = st.setpoint - st.current_temp
+        if abs(gap) < 0.2:
+            return 0
+        if abs(slope) < 1e-5 or (gap > 0) != (slope > 0):
+            return None                              # estable o alejándose
+        mins = (gap / slope) / 60.0
+        return round(mins) if 0 <= mins <= 24 * 60 else None
 
     def _enqueue(self, cmd: bytes):
         with self._qlock:
@@ -150,11 +199,10 @@ class AidooServer:
                 for typ, reg, data in frames:
                     if typ == 0x01 and self.state.update_from_report(reg, data):
                         changed = True
-                if changed and self.on_change:
-                    try:
-                        self.on_change(self.state.to_dict())
-                    except Exception as e:
-                        self.log(f"[aidoo] on_change error: {e}")
+                        if reg == P.REG_CURRENT_TEMP and self.state.current_temp is not None:
+                            self._samples.append((time.time(), self.state.current_temp))
+                if changed:
+                    self._notify()
         except Exception:
             pass
         finally:

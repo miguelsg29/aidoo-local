@@ -58,6 +58,11 @@
   .hexrow button{padding:9px 14px;border-radius:9px;border:0;background:var(--accent);
     color:#fff;font-weight:600;cursor:pointer}
   .off{opacity:.5;pointer-events:none}
+  .sensors{display:flex;gap:10px}
+  .sensors>div{flex:1;font-size:12px;color:var(--muted);text-align:center;padding:9px 4px;
+    border:1px solid var(--line);border-radius:11px}
+  .sensors b{display:block;font-size:21px;color:var(--ink);margin-top:3px}
+  .seg button.sel[data-v=led]{background:var(--accent)}
 </style>
 </head>
 <body>
@@ -79,6 +84,18 @@
     <div class="seg" id="fans"></div>
   </div>
 
+  <div class="card" id="extras">
+    <div class="sensors">
+      <div>Trabajo<b id="work">--°</b></div>
+      <div>Retorno<b id="ret">--°</b></div>
+      <div>A confort<b id="eta">--</b></div>
+    </div>
+    <div class="lbl">Temporizador de apagado</div>
+    <div class="seg" id="timers"></div>
+    <div class="lbl">LED</div>
+    <div class="seg"><button id="ledbtn">LED</button></div>
+  </div>
+
   <details>
     <summary>Depuración (registros del Aidoo)</summary>
     <table id="raw"><tbody></tbody></table>
@@ -94,6 +111,7 @@
 var BASE = location.pathname.replace(/[^/]*$/, "");   // soporta el ingress de Home Assistant
 var MODES = [["off","Apagar"],["auto","Auto"],["cool","Frío"],["heat","Calor"],["dry","Deshu"],["fan_only","Ventilador"]];
 var FANS = [["auto","Auto"],["low","Baja"],["medium","Media"],["high","Alta"]];
+var TIMERS = [[0,"Off"],[30,"30m"],[60,"60m"],[90,"90m"],[120,"2h"]];
 var state = {};
 
 function build(container, items, action){
@@ -119,6 +137,11 @@ function render(){
   var hvac = state.hvac_mode || "off";
   document.querySelectorAll("#modes button").forEach(function(b){ b.classList.toggle("sel", b.dataset.v===hvac); });
   document.querySelectorAll("#fans button").forEach(function(b){ b.classList.toggle("sel", b.dataset.v===state.fan); });
+  document.getElementById("work").textContent = (state.work_temp!=null?state.work_temp:"--")+"°";
+  document.getElementById("ret").textContent = (state.return_temp!=null?state.return_temp:"--")+"°";
+  document.getElementById("eta").textContent = (state.eta_min!=null?state.eta_min+" min":"—");
+  document.querySelectorAll("#timers button").forEach(function(b){ b.classList.toggle("sel", Number(b.dataset.v)===(state.timer_min||0)); });
+  var ledb=document.getElementById("ledbtn"); ledb.dataset.v="led"; ledb.classList.toggle("sel", !!state.led);
   var tb = document.querySelector("#raw tbody"); tb.innerHTML = "";
   var raw = state.raw || {};
   Object.keys(raw).map(Number).sort(function(a,b){return a-b;}).forEach(function(r){
@@ -140,6 +163,8 @@ document.getElementById("sendhex").onclick = function(){
 };
 build(document.getElementById("modes"), MODES, "mode");
 build(document.getElementById("fans"), FANS, "fan");
+build(document.getElementById("timers"), TIMERS, "timer");
+document.getElementById("ledbtn").onclick = function(){ cmd("led", !state.led); };
 poll(); setInterval(poll, 3000);
 </script>
 </body>

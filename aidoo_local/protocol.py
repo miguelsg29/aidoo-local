@@ -20,7 +20,11 @@ REG_POWER = 0x00
 REG_MODE = 0x07
 REG_SETPOINT = 0x08
 REG_FAN = 0x0B
-REG_CURRENT_TEMP = 0x0C
+REG_CURRENT_TEMP = 0x0C     # Tª Zona / ambiente
+REG_RETURN_TEMP = 0x23      # Tª Retorno (lectura)
+REG_WORK_TEMP = 0x2D        # Tª Trabajo (lectura)
+REG_TIMER = 0x87            # temporizador de apagado (segundos)
+REG_LED = 0x89              # estado del LED (bit 1: 0=encendido, 1=apagado)
 
 # --- modos (byte alto de reg 0x07; bitmask) <-> nombres de Home Assistant ---
 # Valores verificados cruzando comando de la nube -> Modbus (verdad de referencia):
@@ -90,14 +94,32 @@ def cmd_fan(fan_val: int) -> bytes:
     return frame(0x02, REG_FAN, bytes([0x00, 0xFF, fan_val & 0xFF, 0x00]))
 
 
+def cmd_timer(minutes: int) -> bytes:
+    """Temporizador de apagado. minutes=0 lo cancela. Tiempo en segundos LE, duplicado."""
+    secs = max(0, int(minutes)) * 60
+    le = secs.to_bytes(2, "little")
+    data = (bytes([0x00, 0x00, 0x00, 0x01]) + le + bytes([0x00, 0x00]) + le
+            + bytes([0x00, 0x00, 0x00, 0xFF, 0xFE]) + bytes([0xFF] * 12))
+    return frame(0x02, REG_TIMER, data)
+
+
+def cmd_led(on: bool) -> bytes:
+    # máscara 0xfffd = toca solo el bit 1; bit1=0 -> LED encendido, bit1=1 -> LED apagado
+    return frame(0x02, REG_LED, bytes([0xFD, 0xFF, 0x00 if on else 0x02, 0x00]))
+
+
 @dataclass
 class AidooState:
     """Estado del aire, actualizado desde la telemetría del Aidoo."""
     power: bool | None = None
     mode: str | None = None          # auto/cool/heat/dry/fan_only
     setpoint: float | None = None
-    current_temp: float | None = None
+    current_temp: float | None = None  # Tª Zona / ambiente
     fan: str | None = None           # low/medium/high
+    work_temp: float | None = None   # Tª Trabajo (lectura)
+    return_temp: float | None = None  # Tª Retorno (lectura)
+    timer_min: int = 0               # temporizador de apagado (minutos; 0=off) — optimista
+    led: bool = True                 # estado del LED
     raw: dict = field(default_factory=dict)  # último dato crudo por registro (depuración)
 
     def hvac_mode(self) -> str:
@@ -114,16 +136,26 @@ class AidooState:
         VELOCIDAD del ventilador NO se reportan (verificado: ningún registro cambia al
         cambiarlos), así que se llevan por seguimiento optimista en el servidor (set_*)."""
         self.raw[reg] = data.hex()
-        before = (self.power, self.setpoint, self.current_temp)
+        before = (self.power, self.setpoint, self.current_temp,
+                  self.work_temp, self.return_temp, self.led)
         if reg == REG_POWER and len(data) >= 4:
             self.power = bool(data[-1] & 0x01)   # bit0 del bloque de estado = encendido
         elif reg == REG_SETPOINT and len(data) >= 4:
             self.setpoint = _le16(data) / 10.0
         elif reg == REG_CURRENT_TEMP and len(data) >= 4:
             self.current_temp = _le16(data) / 10.0
-        after = (self.power, self.setpoint, self.current_temp)
+        elif reg == REG_WORK_TEMP and len(data) >= 4:
+            self.work_temp = _le16(data) / 10.0
+        elif reg == REG_RETURN_TEMP and len(data) >= 4:
+            self.return_temp = _le16(data) / 10.0
+        elif reg == REG_LED and len(data) >= 4:
+            self.led = not bool(data[-1] & 0x02)  # bit1=1 -> apagado
+        after = (self.power, self.setpoint, self.current_temp,
+                 self.work_temp, self.return_temp, self.led)
         return before != after
 
     def to_dict(self) -> dict:
         return {"power": self.power, "hvac_mode": self.hvac_mode(), "mode": self.mode,
-                "setpoint": self.setpoint, "current_temp": self.current_temp, "fan": self.fan}
+                "setpoint": self.setpoint, "current_temp": self.current_temp, "fan": self.fan,
+                "work_temp": self.work_temp, "return_temp": self.return_temp,
+                "timer_min": self.timer_min, "led": self.led}

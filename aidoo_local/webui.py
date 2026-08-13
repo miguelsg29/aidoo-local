@@ -38,7 +38,7 @@ def _make_handler(server):
                 except Exception:
                     self._send(500, "index.html no encontrado", "text/plain")
             elif p == "/api/state":
-                st = server.state.to_dict()
+                st = server.snapshot()
                 st["connected"] = server.connected
                 st["raw"] = server.state.raw
                 self._send(200, json.dumps(st))
@@ -64,6 +64,10 @@ def _make_handler(server):
                         server.set_setpoint(float(data.get("value")))
                     elif act == "fan":
                         server.set_fan(str(data.get("value")))
+                    elif act == "timer":
+                        server.set_timer(int(float(data.get("value"))))
+                    elif act == "led":
+                        server.set_led(bool(data.get("value")))
                     else:
                         return self._send(400, json.dumps({"ok": False, "error": "acción desconocida"}))
                     self._send(200, json.dumps({"ok": True}))

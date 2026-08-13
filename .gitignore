@@ -11,6 +11,13 @@ data/
 *_log.txt
 send.hex
 
+# Capturas de pantalla de la app (PRIVADAS — no subir al repo público)
+Capturasdepantallaaidoo/
+Capturas*/
+*.png
+*.jpg
+*.jpeg
+
 # Python
 __pycache__/
 *.pyc

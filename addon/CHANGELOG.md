@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+- Nuevos controles y sensores (reverseados de la app por MITM y verificados byte a byte):
+  - **Temporizador** de apagado (entidad `number`, minutos; 0 = cancelar) — reg 0x87.
+  - **LED** (entidad `switch`) — reg 0x89.
+  - **Tª Trabajo** y **Tª Retorno** (sensores) — reg 0x2d / 0x23.
+  - **Tiempo a confort** (sensor calculado en local por regresión de la Tª ambiente, como la nube).
+- El panel web muestra los sensores y permite temporizador/LED.
+
 ## 0.1.2
 - Panel web de control y pruebas: estado en vivo (encendido, modo, consigna, temperatura,
   ventilador), controles, y una sección de depuración (registros del Aidoo + envío de
