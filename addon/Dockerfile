@@ -6,7 +6,7 @@ FROM alpine:3.20
 ENV PYTHONUNBUFFERED=1
 RUN apk add --no-cache python3 py3-pip openssl jq curl git
 
-ARG AIDOO_REF=v0.2.0
+ARG AIDOO_REF=v0.2.1
 RUN git clone --depth 1 --branch ${AIDOO_REF} https://github.com/miguelsg29/aidoo-local /app \
     && pip3 install --no-cache-dir --break-system-packages -r /app/requirements.txt
 

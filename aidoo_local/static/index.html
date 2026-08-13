@@ -39,7 +39,7 @@
   .seg button{flex:1;min-width:74px;padding:11px 8px;border-radius:11px;border:1px solid var(--line);
     background:var(--card);color:var(--ink);font-size:13.5px;cursor:pointer;font-weight:600}
   .seg button.sel{color:#fff;border-color:transparent}
-  .seg button.sel[data-v=off]{background:var(--off)}
+  .seg button.sel[data-v=off]{background:#697386}
   .seg button.sel[data-v=auto],.seg button.sel[data-v=fan_auto]{background:var(--auto)}
   .seg button.sel[data-v=cool]{background:var(--cool)}
   .seg button.sel[data-v=heat]{background:var(--heat)}
@@ -62,7 +62,8 @@
   .sensors>div{flex:1;font-size:12px;color:var(--muted);text-align:center;padding:9px 4px;
     border:1px solid var(--line);border-radius:11px}
   .sensors b{display:block;font-size:21px;color:var(--ink);margin-top:3px}
-  .seg button.sel[data-v=led]{background:var(--accent)}
+  .seg button.sel[data-v="1"]{background:var(--on)}
+  .seg button.sel[data-v="0"]{background:#697386}
 </style>
 </head>
 <body>
@@ -92,8 +93,8 @@
     </div>
     <div class="lbl">Temporizador de apagado</div>
     <div class="seg" id="timers"></div>
-    <div class="lbl">LED</div>
-    <div class="seg"><button id="ledbtn">LED</button></div>
+    <div class="lbl">Estado del LED</div>
+    <div class="seg" id="led"></div>
   </div>
 
   <details>
@@ -109,8 +110,9 @@
 
 <script>
 var BASE = location.pathname.replace(/[^/]*$/, "");   // soporta el ingress de Home Assistant
-var MODES = [["off","Apagar"],["auto","Auto"],["cool","Frío"],["heat","Calor"],["dry","Deshu"],["fan_only","Ventilador"]];
+var MODES = [["off","Apagar"],["fan_only","Ventilador"],["cool","Frío"],["heat","Calor"],["dry","Deshu"],["auto","Auto"]];
 var FANS = [["auto","Auto"],["low","Baja"],["medium","Media"],["high","Alta"]];
+var LED = [[1,"ON"],[0,"OFF"]];
 var TIMERS = [[0,"Off"],[30,"30m"],[60,"60m"],[90,"90m"],[120,"2h"]];
 var state = {};
 
@@ -141,7 +143,7 @@ function render(){
   document.getElementById("ret").textContent = (state.return_temp!=null?state.return_temp:"--")+"°";
   document.getElementById("eta").textContent = (state.eta_min!=null?state.eta_min+" min":"—");
   document.querySelectorAll("#timers button").forEach(function(b){ b.classList.toggle("sel", Number(b.dataset.v)===(state.timer_min||0)); });
-  var ledb=document.getElementById("ledbtn"); ledb.dataset.v="led"; ledb.classList.toggle("sel", !!state.led);
+  document.querySelectorAll("#led button").forEach(function(b){ b.classList.toggle("sel", Number(b.dataset.v)===(state.led?1:0)); });
   var tb = document.querySelector("#raw tbody"); tb.innerHTML = "";
   var raw = state.raw || {};
   Object.keys(raw).map(Number).sort(function(a,b){return a-b;}).forEach(function(r){
@@ -164,7 +166,7 @@ document.getElementById("sendhex").onclick = function(){
 build(document.getElementById("modes"), MODES, "mode");
 build(document.getElementById("fans"), FANS, "fan");
 build(document.getElementById("timers"), TIMERS, "timer");
-document.getElementById("ledbtn").onclick = function(){ cmd("led", !state.led); };
+build(document.getElementById("led"), LED, "led");
 poll(); setInterval(poll, 3000);
 </script>
 </body>

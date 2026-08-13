@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+- Panel web: etiqueta "Estado del LED" con botones ON/OFF, botón Apagar más visible,
+  y modo Auto en lugar destacado (Ventilador a la fila).
+
 ## 0.2.0
 - Nuevos controles y sensores (reverseados de la app por MITM y verificados byte a byte):
   - **Temporizador** de apagado (entidad `number`, minutos; 0 = cancelar) — reg 0x87.
