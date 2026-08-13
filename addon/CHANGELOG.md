@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+- ETA a confort: muestreo periódico de la Tª ambiente (cada 30 s) en vez de solo al cambiar,
+  para estimar aunque la temperatura baje despacio (antes no acumulaba serie temporal).
+
 ## 0.2.1
 - Panel web: etiqueta "Estado del LED" con botones ON/OFF, botón Apagar más visible,
   y modo Auto en lugar destacado (Ventilador a la fila).

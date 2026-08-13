@@ -145,6 +145,15 @@ class AidooServer:
 
     def start(self):
         threading.Thread(target=self._serve, daemon=True).start()
+        threading.Thread(target=self._sampler, daemon=True).start()
+
+    def _sampler(self):
+        """Muestrea la Tª ambiente cada 30 s (aunque no cambie) para tener una serie temporal
+        con la que estimar el ETA a confort aunque la temperatura baje despacio."""
+        while True:
+            time.sleep(30)
+            if self.state.power and self.state.current_temp is not None:
+                self._samples.append((time.time(), self.state.current_temp))
 
     def _serve(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -199,8 +208,6 @@ class AidooServer:
                 for typ, reg, data in frames:
                     if typ == 0x01 and self.state.update_from_report(reg, data):
                         changed = True
-                        if reg == P.REG_CURRENT_TEMP and self.state.current_temp is not None:
-                            self._samples.append((time.time(), self.state.current_temp))
                 if changed:
                     self._notify()
         except Exception:
